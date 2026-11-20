@@ -1,0 +1,173 @@
+
+def generate_walsh_matrix(size):
+    matrix = [[1]]
+
+    while len(matrix) < size:
+        old = matrix
+        n = len(old)
+
+        matrix = [[0 for j in range(2 * n)]
+                  for i in range(2 * n)]
+
+        for i in range(n):
+            for j in range(n):
+                matrix[i][j] = old[i][j]
+                matrix[i][j + n] = old[i][j]
+                matrix[i + n][j] = old[i][j]
+                matrix[i + n][j + n] = -old[i][j]
+
+    return matrix
+
+
+def convert_data(bit):
+    if bit == 1:
+        return 1
+    else:
+        return -1
+
+
+def spread_data(data, code):
+    spread = []
+
+    for bit in data:
+        signal = convert_data(bit)
+
+        chips = []
+
+        for value in code:
+            chips.append(signal * value)
+
+        spread.extend(chips)
+
+    return spread
+
+
+def combine_signals(signals):
+    combined = []
+
+    length = len(signals[0])
+
+    for i in range(length):
+        total = 0
+
+        for user in signals:
+            total += user[i]
+
+        combined.append(total)
+
+    return combined
+
+
+def despread_data(received_signal, code):
+    recovered = []
+
+    code_length = len(code)
+
+    for i in range(0, len(received_signal), code_length):
+        chips = received_signal[
+            i:i + code_length
+        ]
+
+        result = 0
+
+        for j in range(code_length):
+            result += chips[j] * code[j]
+
+        if result > 0:
+            recovered.append(1)
+        else:
+            recovered.append(0)
+
+    return recovered
+
+
+def display_matrix(matrix):
+    print("\nWALSH CODE MATRIX")
+
+    for row in matrix:
+        print(row)
+
+
+def main():
+    print("=" * 65)
+    print("CDMA SPREADING AND DESPREADING SIMULATION")
+    print("=" * 65)
+
+    users = int(input("Enter number of users (1, 2, 4 or 8): "))
+
+    if users not in [1, 2, 4, 8]:
+        print("Number of users must be 1, 2, 4 or 8.")
+        return
+
+    walsh_matrix = generate_walsh_matrix(users)
+
+    display_matrix(walsh_matrix)
+
+    user_data = []
+
+    print("\nENTER DATA FOR EACH USER")
+
+    for i in range(users):
+        bits = input(
+            "Enter binary data for User " + str(i + 1) + ": "
+        )
+
+        if not bits or any(bit not in "01" for bit in bits):
+            print("Enter valid binary data.")
+            return
+
+        if user_data and len(bits) != len(user_data[0]):
+            print("All users must have equal data length.")
+            return
+
+        user_data.append([int(bit) for bit in bits])
+
+    print("\nSPREADING PROCESS")
+    print("-" * 65)
+
+    spread_signals = []
+
+    for i in range(users):
+        code = walsh_matrix[i]
+
+        spread = spread_data(
+            user_data[i], code
+        )
+
+        spread_signals.append(spread)
+
+        print("User", i + 1, "Original Data:", user_data[i])
+        print("User", i + 1, "Walsh Code:", code)
+        print("User", i + 1, "Spread Signal:", spread)
+        print()
+
+    combined_signal = combine_signals(
+        spread_signals
+    )
+
+    print("\nCOMBINED TRANSMITTED SIGNAL")
+    print("-" * 65)
+    print(combined_signal)
+
+    print("\nDESPREADING PROCESS")
+    print("-" * 65)
+
+    for i in range(users):
+        recovered = despread_data(
+            combined_signal,
+            walsh_matrix[i]
+        )
+
+        print("User", i + 1, "Recovered Data:", recovered)
+
+        if recovered == user_data[i]:
+            print("User", i + 1, "Transmission Successful")
+        else:
+            print("User", i + 1, "Transmission Failed")
+
+        print()
+
+    print("CDMA SIMULATION COMPLETED")
+
+if __name__ == "__main__":
+    main()
