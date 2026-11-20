@@ -1,0 +1,125 @@
+
+import math
+
+def calculate_cluster_size(i, j):
+    return i * i + i * j + j * j
+
+def calculate_reuse_distance(radius, cluster_size):
+    return radius * math.sqrt(3 * cluster_size)
+
+def calculate_reuse_ratio(cluster_size):
+    return math.sqrt(3 * cluster_size)
+
+def calculate_channels(total_channels, cluster_size):
+    return total_channels // cluster_size
+
+def calculate_capacity(channels_per_cell, number_of_cells):
+    return channels_per_cell * number_of_cells
+
+def calculate_si(cluster_size, path_loss_exponent):
+    q = math.sqrt(3 * cluster_size)
+    si = (q ** path_loss_exponent) / 6
+    si_db = 10 * math.log10(si)
+    return si, si_db
+
+def display_cluster_sizes():
+    print("\nVALID CLUSTER SIZES")
+    print("-" * 40)
+
+    values = []
+
+    for i in range(0, 6):
+        for j in range(0, 6):
+            n = calculate_cluster_size(i, j)
+
+            if n > 0 and n not in values:
+                values.append(n)
+
+    values.sort()
+
+    for n in values:
+        print("Cluster Size:", n)
+
+def main():
+    print("=" * 60)
+    print("CELLULAR FREQUENCY REUSE ANALYSIS")
+    print("=" * 60)
+
+    display_cluster_sizes()
+
+    print("\nEnter frequency reuse parameters")
+
+    i = int(input("Enter frequency reuse parameter i: "))
+    j = int(input("Enter frequency reuse parameter j: "))
+
+    radius = float(input("Enter cell radius in km: "))
+    total_channels = int(input("Enter total available channels: "))
+    number_of_cells = int(input("Enter number of cells: "))
+    path_loss_exponent = float(input("Enter path loss exponent: "))
+
+    if i < 0 or j < 0 or (i == 0 and j == 0):
+        print("Invalid frequency reuse parameters.")
+        return
+
+    if radius <= 0 or total_channels <= 0 or number_of_cells <= 0:
+        print("Enter positive values.")
+        return
+
+    if path_loss_exponent <= 0:
+        print("Path loss exponent must be positive.")
+        return
+
+    N = calculate_cluster_size(i, j)
+
+    reuse_distance = calculate_reuse_distance(radius, N)
+
+    reuse_ratio = calculate_reuse_ratio(N)
+
+    channels_per_cell = total_channels // N
+
+    capacity = calculate_capacity(
+        channels_per_cell, number_of_cells
+    )
+
+    si, si_db = calculate_si(N, path_loss_exponent)
+
+    print("\nFREQUENCY REUSE RESULTS")
+    print("-" * 50)
+
+    print("Parameter i                 :", i)
+    print("Parameter j                 :", j)
+    print("Cluster Size (N)             :", N)
+    print("Cell Radius                  :", radius, "km")
+    print("Frequency Reuse Distance     :", round(reuse_distance, 2), "km")
+    print("Frequency Reuse Ratio        :", round(reuse_ratio, 2))
+    print("Total Available Channels     :", total_channels)
+    print("Channels Per Cell            :", channels_per_cell)
+    print("Number of Cells              :", number_of_cells)
+    print("Total System Capacity        :", capacity, "channels")
+    print("Path Loss Exponent           :", path_loss_exponent)
+
+    print("\nSIGNAL TO INTERFERENCE RATIO")
+    print("-" * 50)
+
+    print("S/I Ratio                    :", round(si, 2))
+    print("S/I Ratio in dB              :", round(si_db, 2), "dB")
+
+    print("\nCLUSTER SIZE COMPARISON")
+    print("-" * 50)
+
+    for x in [3, 4, 7, 9, 12, 13, 16, 19]:
+        distance = calculate_reuse_distance(radius, x)
+        q = calculate_reuse_ratio(x)
+        ratio, ratio_db = calculate_si(x, path_loss_exponent)
+
+        print(
+            "N =", x,
+            "| Reuse Distance =", round(distance, 2),
+            "| Q =", round(q, 2),
+            "| S/I =", round(ratio_db, 2), "dB"
+        )
+
+    print("\nFrequency reuse calculation completed.")
+
+if __name__ == "__main__":
+    main()
