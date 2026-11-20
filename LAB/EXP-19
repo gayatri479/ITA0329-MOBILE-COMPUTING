@@ -1,0 +1,28 @@
+
+import random
+
+hysteresis = 5
+current_bs = "BS1"
+
+print("Handoff Simulation")
+
+for i in range(1, 11):
+    bs1 = random.randint(-100, -50)
+    bs2 = random.randint(-100, -50)
+
+    print("\nTime:", i)
+    print("BS1 Signal:", bs1, "dBm")
+    print("BS2 Signal:", bs2, "dBm")
+
+    if current_bs == "BS1" and bs2 > bs1 + hysteresis:
+        current_bs = "BS2"
+        print("Handoff from BS1 to BS2")
+
+    elif current_bs == "BS2" and bs1 > bs2 + hysteresis:
+        current_bs = "BS1"
+        print("Handoff from BS2 to BS1")
+
+    else:
+        print("No Handoff")
+
+    print("Connected Base Station:", current_bs)
