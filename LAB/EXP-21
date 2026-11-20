@@ -1,0 +1,207 @@
+
+import random
+
+def generate_channel_quality(users, resource_blocks):
+    channel = []
+
+    for i in range(users):
+        user_channel = []
+
+        for j in range(resource_blocks):
+            quality = random.uniform(1, 10)
+            user_channel.append(quality)
+
+        channel.append(user_channel)
+
+    return channel
+
+
+def round_robin_scheduler(channel, users, resource_blocks):
+    throughput = [0.0] * users
+    allocation = [0] * users
+
+    for rb in range(resource_blocks):
+        user = rb % users
+
+        throughput[user] += channel[user][rb]
+        allocation[user] += 1
+
+    return throughput, allocation
+
+
+def maximum_rate_scheduler(channel, users, resource_blocks):
+    throughput = [0.0] * users
+    allocation = [0] * users
+
+    for rb in range(resource_blocks):
+        best_user = 0
+        best_rate = channel[0][rb]
+
+        for user in range(1, users):
+            if channel[user][rb] > best_rate:
+                best_rate = channel[user][rb]
+                best_user = user
+
+        throughput[best_user] += best_rate
+        allocation[best_user] += 1
+
+    return throughput, allocation
+
+
+def proportional_fair_scheduler(channel, users, resource_blocks):
+    throughput = [0.0] * users
+    average_rate = [1.0] * users
+    allocation = [0] * users
+
+    for rb in range(resource_blocks):
+        best_user = 0
+        best_metric = -1
+
+        for user in range(users):
+            metric = (
+                channel[user][rb] / average_rate[user]
+            )
+
+            if metric > best_metric:
+                best_metric = metric
+                best_user = user
+
+        selected_rate = channel[best_user][rb]
+
+        throughput[best_user] += selected_rate
+        allocation[best_user] += 1
+
+        average_rate[best_user] = (
+            0.8 * average_rate[best_user]
+            + 0.2 * selected_rate
+        )
+
+    return throughput, allocation
+
+
+def calculate_fairness(throughput):
+    total = sum(throughput)
+    square_sum = sum(x * x for x in throughput)
+    users = len(throughput)
+
+    if square_sum == 0:
+        return 0
+
+    fairness = (total * total) / (
+        users * square_sum
+    )
+
+    return fairness
+
+
+def display_results(name, throughput, allocation):
+    print("\n", name)
+    print("-" * 65)
+
+    print("{:<15}{:<20}{:<20}".format(
+        "User", "Throughput", "RB Allocation"
+    ))
+
+    for i in range(len(throughput)):
+        print("{:<15}{:<20.2f}{:<20}".format(
+            "User " + str(i + 1),
+            throughput[i],
+            allocation[i]
+        ))
+
+    total = sum(throughput)
+    fairness = calculate_fairness(throughput)
+
+    print("-" * 65)
+    print("Total Throughput :", round(total, 2))
+    print("Average Throughput:", round(total / len(throughput), 2))
+    print("Jain Fairness Index:", round(fairness, 4))
+
+
+def display_channel_quality(channel):
+    print("\nCHANNEL QUALITY MATRIX")
+    print("-" * 65)
+
+    for i in range(len(channel)):
+        print(
+            "User", i + 1, ":",
+            [round(x, 2) for x in channel[i]]
+        )
+
+
+def main():
+    print("=" * 70)
+    print("OFDMA DOWNLINK SCHEDULER SIMULATION")
+    print("=" * 70)
+
+    users = int(input("Enter number of users: "))
+    resource_blocks = int(
+        input("Enter number of resource blocks: ")
+    )
+
+    if users <= 0 or resource_blocks <= 0:
+        print("Enter positive values.")
+        return
+
+    random.seed(42)
+
+    channel = generate_channel_quality(
+        users, resource_blocks
+    )
+
+    display_channel_quality(channel)
+
+    print("\nRUNNING SCHEDULING ALGORITHMS")
+
+    rr_throughput, rr_allocation = round_robin_scheduler(
+        channel, users, resource_blocks
+    )
+
+    mr_throughput, mr_allocation = maximum_rate_scheduler(
+        channel, users, resource_blocks
+    )
+
+    pf_throughput, pf_allocation = proportional_fair_scheduler(
+        channel, users, resource_blocks
+    )
+
+    display_results(
+        "ROUND ROBIN SCHEDULING",
+        rr_throughput, rr_allocation
+    )
+
+    display_results(
+        "MAXIMUM RATE SCHEDULING",
+        mr_throughput, mr_allocation
+    )
+
+    display_results(
+        "PROPORTIONAL FAIR SCHEDULING",
+        pf_throughput, pf_allocation
+    )
+
+    print("\nFINAL PERFORMANCE COMPARISON")
+    print("=" * 70)
+
+    print("{:<25}{:<20}{:<20}".format(
+        "Scheduler", "Total Throughput", "Fairness Index"
+    ))
+
+    results = [
+        ("Round Robin", rr_throughput),
+        ("Maximum Rate", mr_throughput),
+        ("Proportional Fair", pf_throughput)
+    ]
+
+    for name, throughput in results:
+        print("{:<25}{:<20.2f}{:<20.4f}".format(
+            name,
+            sum(throughput),
+            calculate_fairness(throughput)
+        ))
+
+    print("\nOFDMA SCHEDULER SIMULATION COMPLETED")
+
+
+if __name__ == "__main__":
+    main()
