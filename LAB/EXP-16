@@ -1,0 +1,89 @@
+
+import math
+
+def calculate_fspl(frequency, distance):
+    fspl = 32.44 + 20 * math.log10(frequency) + 20 * math.log10(distance)
+    return fspl
+
+def calculate_received_power(tx_power, tx_gain, rx_gain,
+                             fspl, tx_loss, rx_loss):
+    received_power = (tx_power + tx_gain + rx_gain
+                      - fspl - tx_loss - rx_loss)
+    return received_power
+
+def calculate_distance_table(frequency, tx_power, tx_gain,
+                             rx_gain, tx_loss, rx_loss):
+    distances = [0.1, 0.5, 1, 2, 5, 10]
+
+    print("\nFREE SPACE PATH LOSS ANALYSIS")
+    print("-" * 90)
+    print("{:<15}{:<20}{:<25}{:<20}".format(
+        "Distance(km)", "FSPL(dB)",
+        "Received Power(dBm)", "Status"))
+    print("-" * 90)
+
+    for distance in distances:
+        fspl = calculate_fspl(frequency, distance)
+
+        power = calculate_received_power(
+            tx_power, tx_gain, rx_gain,
+            fspl, tx_loss, rx_loss
+        )
+
+        if power >= -70:
+            status = "Excellent"
+        elif power >= -90:
+            status = "Good"
+        elif power >= -110:
+            status = "Weak"
+        else:
+            status = "Very Weak"
+
+        print("{:<15}{:<20.2f}{:<25.2f}{:<20}".format(
+            distance, fspl, power, status))
+
+    print("-" * 90)
+
+def main():
+    print("=" * 60)
+    print("FREE SPACE PATH LOSS AND RECEIVED POWER")
+    print("=" * 60)
+
+    frequency = float(input("Enter frequency in MHz: "))
+    distance = float(input("Enter distance in km: "))
+    tx_power = float(input("Enter transmitted power in dBm: "))
+    tx_gain = float(input("Enter transmitter antenna gain in dBi: "))
+    rx_gain = float(input("Enter receiver antenna gain in dBi: "))
+    tx_loss = float(input("Enter transmitter cable loss in dB: "))
+    rx_loss = float(input("Enter receiver cable loss in dB: "))
+
+    if frequency <= 0 or distance <= 0:
+        print("Frequency and distance must be positive.")
+        return
+
+    fspl = calculate_fspl(frequency, distance)
+
+    received_power = calculate_received_power(
+        tx_power, tx_gain, rx_gain,
+        fspl, tx_loss, rx_loss
+    )
+
+    print("\nINDIVIDUAL CALCULATION")
+    print("-" * 40)
+    print("Frequency             :", frequency, "MHz")
+    print("Distance              :", distance, "km")
+    print("Transmitted Power     :", tx_power, "dBm")
+    print("Free Space Path Loss  :", round(fspl, 2), "dB")
+    print("Received Power        :", round(received_power, 2), "dBm")
+
+    print("\nDISTANCE COMPARISON")
+
+    calculate_distance_table(
+        frequency, tx_power, tx_gain,
+        rx_gain, tx_loss, rx_loss
+    )
+
+    print("\nCalculation completed successfully.")
+
+if __name__ == "__main__":
+    main()
